@@ -73,6 +73,7 @@ namespace MyDataStructure
             }
             return cur;
         }
+
     }
     public class DataUnit:ICloneable
     {
@@ -563,5 +564,195 @@ namespace MyDataStructure
         
 
     }
+
+
+    public class UnamedClass
+    {
+        public static void Classification(List<object> lst,
+            System.Func<object,double> func,
+            out int num_of_cassification,
+            double isolate_width=0.3,
+            int num_of_cells=100)
+        {
+            //首先用func算出各个对象的指标
+            List<object> zhibiaos = new List<object>();
+            foreach (object item in lst)
+            {
+                zhibiaos.Add(func(item));
+            }
+
+            //计对指标进行归一化
+            double minv = (double)MyStatistic.min(zhibiaos);
+            double maxv = (double)MyStatistic.max(zhibiaos);
+            double length = maxv - minv;
+            for (int i = 0; i < zhibiaos.Count; i++)
+            {
+                zhibiaos[i]= ((double)zhibiaos[i] - minv) / length;
+            }
+
+            //
+            int[] pinshu = new int[num_of_cells];
+            double cell_width = 1.0 / (double)num_of_cells;
+            foreach (double item in zhibiaos)
+            {
+                for (int i = 0; i < num_of_cells; i++)
+                {
+                    if (item <i*cell_width)
+                    {
+                        pinshu[i] += 1;
+                        break;
+                    }
+                    else
+                    {
+                        if (i==num_of_cells-1)
+                        {
+                            pinshu[i] += 1;//指标=1的情况
+                        }
+                    }
+                }
+            }
+
+            int num_of_isolate_cells = (int)(isolate_width / cell_width);
+
+            //寻找分隔带
+            List<double> isolate_values = new List<double>();
+            int last_zero = 0;
+            for (int i = 0; i < num_of_cells; i++)
+            {
+                if (pinshu[i]>0)
+                {
+                    //当发现有频数的时候
+                    //先检查是否达到隔离带的宽度
+                    if(i-last_zero>=num_of_cells)
+                    {
+                        isolate_values.Add(last_zero * cell_width);
+                    }
+                    else
+                    {
+                        //没有达到隔离带宽度的 重新设置lastzero的值
+                        last_zero = i + 1;
+                    }
+                }
+            }
+
+            //计算分类数
+            num_of_cassification = isolate_values.Count + 1;
+
+
+
+        }
+
+
+
+
+        /// <summary>
+        /// 对一维数组中的数进行分类
+        /// </summary>
+        /// <param name="ary"></param>
+        /// <param name="groups"></param>
+        /// <param name="groups_id"></param>
+        /// <param name="span_of_isolate">分类的距离 可取1.0/类别数,此值越小类别越多</param>
+        /// <param name="num_of_cells">划分cell的数量，可取类别数*10,此值影响分类的准确性，小到一定值就行</param>
+        /// <returns></returns>
+        public static bool classify(List<double> ary,
+            out List<List<double>> groups,
+            out List<List<int>> groups_id,
+            double span_of_isolate=0.3,
+            int num_of_cells = 100)
+        {
+
+            //归一化ary
+            List<object> al = new List<object>();
+            foreach (object item in ary)
+            {
+                al.Add(item);
+            }
+            double minv = (double)MyStatistic.min(al);
+            double maxv = (double)MyStatistic.max(al);
+            List<double> ary1 = new List<double>();//归一化后的数组
+            foreach (double item in ary)
+            {
+                ary1.Add((item - minv) / (maxv - minv));
+            }
+
+            //计算参数
+            int Nc = num_of_cells;
+            double Wc = 1.0/Convert.ToDouble(Nc);
+            int[] pinshu = new int[Nc];//频数数组
+            for (int i = 0; i < Nc; i++)
+            {
+                pinshu[i] = 0;
+            }
+
+            //计算频数数组
+            foreach (double item in ary1)
+            {
+                for (int i = 0; i < Nc; i++)
+                {
+                    if (item<=(i+1)*Wc)
+                    {
+                        pinshu[i] += 1;
+                        break;
+                    }
+                }
+            }
+
+            //计算分隔值
+            int Siso = (int)(span_of_isolate / Wc);
+            int last_zero = 0;
+            List<double> isolate_values = new List<double>();//存放分隔值
+            for (int i = 0; i < Nc; i++)
+            {
+                if (pinshu[i]>0)
+                {
+                    if (i-last_zero>Siso)
+                    {
+                        //是分隔值
+                        isolate_values.Add((last_zero + 1) * Wc);
+                        last_zero = i + 1;
+                    }
+                    else
+                    {
+                        last_zero = i + 1;
+                    }
+                }
+            }
+
+            //利用计算得出的分隔值 分组
+            groups = new List<List<double>>();
+            groups_id = new List<List<int>>();
+            for (int i = 0; i < isolate_values.Count+1; i++)
+            {
+                //groups的长度=分隔值+1
+                groups.Add(new List<double>());
+                groups_id.Add(new List<int>());
+            }
+            for (int i = 0; i < ary1.Count; i++)
+            {
+                double value = ary1[i];
+                for (int j = 0; j < isolate_values.Count; j++)
+                {
+                    if (value<isolate_values[j])
+                    {
+                        groups[j].Add(ary[i]);
+                        groups_id[j].Add(i);
+                        break;
+                    }
+                    else
+                    {
+                        if(j==isolate_values.Count-1)
+                        {
+                            //由于分隔值始终会小于最大的value 这时候放到第count+1
+                            groups[isolate_values.Count].Add(ary[i]);
+                            groups_id[isolate_values.Count].Add(i);
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
+
 
 }

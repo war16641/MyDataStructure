@@ -124,4 +124,28 @@ namespace MyDataStructure.Tests
             Assert.AreEqual("sd", (string)fdm.units[fdm.Count-1].data["归属地"]);
         }
     }
+
+    [TestClass()]
+    public class UnamedClassTests
+    {
+        [TestMethod()]
+        public void test_classify()
+        {
+            List<double> al = new List<double> { 10.1, 10.9, 10.7, 10.2, 10.8, 10.3 };
+            List<List<double>> ot;
+            List<List<int>> ids;
+            UnamedClass.classify(al,out ot,out ids);
+            Assert.AreEqual(2, ot.Count);
+            Assert.AreEqual(3, ot[0].Count);
+
+            UnamedClass.classify(al, out ot, out ids, 0.09);
+            Assert.AreEqual(6, ot.Count);
+            Assert.AreEqual(1, ot[0].Count);
+
+            al = new List<double> { 10.1, 10.9, 10.78, 10.2, 10.8, 10.5,10.55 };
+            UnamedClass.classify(al, out ot, out ids, 0.2);
+            Assert.AreEqual(3, ot.Count);
+            Assert.AreEqual(3, ot[2].Count);
+        }
+    }
 }
