@@ -568,79 +568,7 @@ namespace MyDataStructure
 
     public class UnamedClass
     {
-        public static void Classification(List<object> lst,
-            System.Func<object,double> func,
-            out int num_of_cassification,
-            double isolate_width=0.3,
-            int num_of_cells=100)
-        {
-            //首先用func算出各个对象的指标
-            List<object> zhibiaos = new List<object>();
-            foreach (object item in lst)
-            {
-                zhibiaos.Add(func(item));
-            }
 
-            //计对指标进行归一化
-            double minv = (double)MyStatistic.min(zhibiaos);
-            double maxv = (double)MyStatistic.max(zhibiaos);
-            double length = maxv - minv;
-            for (int i = 0; i < zhibiaos.Count; i++)
-            {
-                zhibiaos[i]= ((double)zhibiaos[i] - minv) / length;
-            }
-
-            //
-            int[] pinshu = new int[num_of_cells];
-            double cell_width = 1.0 / (double)num_of_cells;
-            foreach (double item in zhibiaos)
-            {
-                for (int i = 0; i < num_of_cells; i++)
-                {
-                    if (item <i*cell_width)
-                    {
-                        pinshu[i] += 1;
-                        break;
-                    }
-                    else
-                    {
-                        if (i==num_of_cells-1)
-                        {
-                            pinshu[i] += 1;//指标=1的情况
-                        }
-                    }
-                }
-            }
-
-            int num_of_isolate_cells = (int)(isolate_width / cell_width);
-
-            //寻找分隔带
-            List<double> isolate_values = new List<double>();
-            int last_zero = 0;
-            for (int i = 0; i < num_of_cells; i++)
-            {
-                if (pinshu[i]>0)
-                {
-                    //当发现有频数的时候
-                    //先检查是否达到隔离带的宽度
-                    if(i-last_zero>=num_of_cells)
-                    {
-                        isolate_values.Add(last_zero * cell_width);
-                    }
-                    else
-                    {
-                        //没有达到隔离带宽度的 重新设置lastzero的值
-                        last_zero = i + 1;
-                    }
-                }
-            }
-
-            //计算分类数
-            num_of_cassification = isolate_values.Count + 1;
-
-
-
-        }
 
 
 
@@ -660,7 +588,12 @@ namespace MyDataStructure
             double span_of_isolate=0.3,
             int num_of_cells = 100)
         {
-
+            groups = new List<List<double>>();
+            groups_id = new List<List<int>>();
+            if (ary.Count==0)
+            {
+                return false;
+            }
             //归一化ary
             List<object> al = new List<object>();
             foreach (object item in ary)
@@ -719,13 +652,22 @@ namespace MyDataStructure
             }
 
             //利用计算得出的分隔值 分组
-            groups = new List<List<double>>();
-            groups_id = new List<List<int>>();
+
             for (int i = 0; i < isolate_values.Count+1; i++)
             {
                 //groups的长度=分隔值+1
                 groups.Add(new List<double>());
                 groups_id.Add(new List<int>());
+            }
+            if (isolate_values.Count==0)//如果没有找到分割 需要单独处理
+            {
+                //输入即为输出
+                for (int i = 0; i < ary1.Count; i++)
+                {
+                    groups[0].Add(ary[i]);
+                    groups_id[0].Add(i);
+                }
+                return true;
             }
             for (int i = 0; i < ary1.Count; i++)
             {

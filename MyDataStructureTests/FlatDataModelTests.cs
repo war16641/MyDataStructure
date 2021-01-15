@@ -147,5 +147,17 @@ namespace MyDataStructure.Tests
             Assert.AreEqual(3, ot.Count);
             Assert.AreEqual(3, ot[2].Count);
         }
+
+        [TestMethod()]
+        public void test_classify1()
+        {
+            List<double> al = new List<double> { 10.1, 10.9, 10.7, 10.2, 10.8, 10.3 };
+            List<List<double>> ot;
+            List<List<int>> ids;
+            UnamedClass.classify(al, out ot, out ids,0.8);
+            Assert.AreEqual(6, ot[0].Count);
+
+
+        }
     }
 }
